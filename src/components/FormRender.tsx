@@ -3,10 +3,10 @@ import Generator, {
   defaultGlobalSettings,
   defaultSettings,
 } from 'fr-generator';
-import React, { useRef } from 'react';
-import { keyBy, zipWith } from 'lodash';
+import { useRef } from 'react';
+import { zipWith } from 'lodash';
 import './styles.css';
-import { Button, message } from 'antd';
+import { Modal, message } from 'antd';
 
 const NewWidget = ({ value = 0, onChange }: any) => (
   <button onClick={() => onChange(value + 1)}>{value}</button>
@@ -20,25 +20,78 @@ const RormRender = () => {
     const val = ref?.current?.getValue();
     const properties = val?.properties || {};
     const v = Object.values(properties) || [];
-    const o = keyBy(v, 'name');
     const noName = v?.find((k: any) => !k.name);
-    console.log('noName----------------', noName);
     if (noName) {
       message.error('存在没有name的组件');
       return;
     }
-    let arr = [];
+    let arr: any = [];
     v?.map((item: any) => {
-      const { enum: _enum, enumNames, hidden, selectValue, title, widget, ...others } = item;
-      // const s = zipWith(_enum, enumNames,)
+      const {
+        enum: _enum = [],
+        enumNames = [],
+        hidden,
+        selectValue,
+        title,
+        widget,
+        initData = null,
+        initAction,
+        linkAction,
+        ...others
+      } = item;
+      let _initData = null;
+      let _linkAction: any = [];
+      let hArr: any = null;
+      if (widget === 'select') {
+        if (initAction) {
+          _initData = [];
+        }
+        if (_enum?.length && enumNames?.length) {
+          _initData = zipWith(_enum, enumNames, (code, name) => ({
+            code,
+            name,
+            selected: code === selectValue ?? false,
+          }));
+        }
+      }
+      if (hidden) {
+        hArr = [];
+        const _h = hidden?.slice(2, hidden?.length - 2).split('&&');
+        _h?.forEach((v: any) => {
+          const item = v?.split('===');
+          const item0 = item?.[0]?.trim();
+          const item1 = item?.[1]?.trim();
+          const first = item0?.substr(10);
+          const second = item1.slice(1, item1?.length - 1);
+          hArr.push({ mNmae: properties[first]?.name, mValue: second });
+        });
+      }
+      if (linkAction) {
+        linkAction?.map((v: any) => {
+          _linkAction.push(v?.value);
+        });
+      }
       let obj = {
         ...others,
         label: title,
-        type: widget,
+        type: widget ?? 'input',
+        initAction,
+        hidden: hArr,
+        initData: widget === 'select' ? _initData : initData,
+        linkAction: _linkAction?.length ? _linkAction : null,
       };
-      console.log('obj----------------', obj);
+      arr.push(obj);
     });
-    console.log('v========', v, o);
+
+    Modal.info({
+      title: 'JSON',
+      content: (
+        <div>
+          <p>{JSON.stringify(arr)}</p>
+        </div>
+      ),
+    });
+    console.log('obj----------------', arr);
   };
 
   return (
@@ -107,11 +160,6 @@ const RormRender = () => {
                     type: 'string',
                     defaultValue: '',
                   },
-                  hidden: {
-                    title: '组件隐藏（hidden）',
-                    type: 'string',
-                    default: '',
-                  },
                 },
               },
             ],
@@ -121,7 +169,6 @@ const RormRender = () => {
           name: {
             title: '组件名称（name）',
             type: 'string',
-            required: true,
           },
           title: {
             title: 'label展示（label）',
@@ -140,8 +187,22 @@ const RormRender = () => {
           },
           linkAction: {
             title: '联动接口(linkAction)',
-            type: 'string',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                value: {
+                  type: 'string',
+                  className: 'link-action',
+                },
+              },
+            },
+            props: {
+              hideCopy: true,
+              hideMove: true,
+            },
             default: null,
+            widget: 'simpleList',
           },
           placeholder: {
             title: '组件提示信息(placeholder)',
@@ -157,6 +218,11 @@ const RormRender = () => {
             title: '是否显示(nullNotVisible)',
             type: 'boolean',
             default: false,
+          },
+          hidden: {
+            title: '组件隐藏（hidden）',
+            type: 'string',
+            default: '',
           },
         }}
       />

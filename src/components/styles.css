@@ -1,3 +1,7 @@
 .right-layout {
   width: 40% !important;
 }
+
+.link-action .fr-content-inline {
+  width: 500px !important;
+}
