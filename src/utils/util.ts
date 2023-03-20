@@ -12,6 +12,7 @@ const settings = () => {
             widget: 'input',
           },
           setting: {
+            ...commonSettings(),
             initData: {
               title: '组件初始值（initData）',
               type: 'string',
@@ -28,6 +29,7 @@ const settings = () => {
             widget: 'select',
           },
           setting: {
+            ...commonSettings(),
             initDataObj: {
               title: '组件初始值（initData）',
               type: 'object',
@@ -86,25 +88,15 @@ const commonSettings = () => {
       type: 'string',
       default: '',
     },
-    initAction: {
-      title: '初始接口(initAction):',
-      type: 'string',
-      default: null,
-    },
     placeholder: {
       title: '组件提示信息(placeholder):',
       type: 'string',
       default: '请输入',
     },
-    require: {
-      title: '是否必填(require)',
-      type: 'boolean',
-      default: true,
-    },
-    nullNotVisible: {
-      title: '是否显示(nullNotVisible)',
-      type: 'boolean',
-      default: false,
+    initAction: {
+      title: '初始接口(initAction):',
+      type: 'string',
+      default: null,
     },
     linkActionObj: {
       title: '联动接口(linkAction)',
@@ -130,8 +122,13 @@ const commonSettings = () => {
         },
       },
     },
-    hidSet: {
-      title: '组件隐藏配置',
+    defaultRequire: {
+      title: '是否必填(require)',
+      type: 'boolean',
+      default: true,
+    },
+    requireSet: {
+      title: '组件是否必填配置',
       type: 'object',
       properties: {
         linkType: {
@@ -152,7 +149,7 @@ const commonSettings = () => {
             type: 'object',
             properties: {
               label: {
-                placeholder: '组件id',
+                placeholder: '组件name',
                 type: 'string',
               },
               setType: {
@@ -177,28 +174,91 @@ const commonSettings = () => {
         },
       },
     },
-    hidden: {
-      title: '组件隐藏（hidden）:',
-      type: 'string',
-      widget: 'HiddenInput',
-      dependencies: ['hidSet'],
+    defaultHidden: {
+      title: '组件隐藏（hidden）',
+      type: 'boolean',
+      default: false,
+    },
+    hiddenSet: {
+      title: '组件隐藏配置',
+      type: 'object',
+      properties: {
+        linkType: {
+          title: '多组件组合类型',
+          type: 'string',
+          widget: 'radio',
+          props: {
+            options: [
+              { label: '&&', value: 'and' },
+              { label: '||', value: 'or' },
+            ],
+          },
+          default: 'and',
+        },
+        enumList: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              label: {
+                placeholder: '组件name',
+                type: 'string',
+              },
+              setType: {
+                type: 'string',
+                enum: ['equal', 'unequal'],
+                enumNames: ['===', '!=='],
+                default: 'equal',
+                widget: 'select',
+              },
+              value: {
+                placeholder: '组件value',
+                type: 'string',
+              },
+            },
+          },
+          props: {
+            hideCopy: true,
+            hideMove: true,
+          },
+          default: [],
+          widget: 'simpleList',
+        },
+      },
     },
   };
 };
 
 const fnGetObjValue = ({ item, _initData, _linkAction }: any) => {
-  const { hidden, title, widget, initData = null, hidSet } = item;
+  const {
+    name,
+    desc,
+    placeholder,
+    defaultHidden,
+    defaultRequire,
+    initAction,
+    title,
+    widget,
+    hiddenSet,
+    requireSet,
+    initData = null,
+  } = item;
+  console.log('ddd------------------------', item);
   return {
-    desc: item?.desc ?? '',
-    initAction: item?.initAction ?? null,
-    nullNotVisible: item?.nullNotVisible ?? false,
-    placeholder: item?.placeholder ?? '请输入',
-    require: item?.require ?? false,
     type: widget ?? 'input',
     label: title,
-    hidden: hidden ? hidSet : null,
-    initData: widget === 'select' ? _initData : initData,
+    name: name,
+    desc: desc ?? '',
+    placeholder: placeholder ?? '请输入',
+    hidden: defaultHidden ?? false,
+    require: defaultRequire ?? false,
+    initAction: initAction ?? null,
     linkAction: _linkAction?.length ? _linkAction : null,
+    initData: widget === 'select' ? _initData : initData,
+    events: {
+      hidden: hiddenSet?.enumList?.length ? hiddenSet : null,
+      require: requireSet?.enumList?.length ? requireSet : null,
+    },
   };
 };
 
