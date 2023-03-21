@@ -12,7 +12,6 @@ const settings = () => {
             widget: 'input',
           },
           setting: {
-            ...commonSettings(),
             initData: {
               title: '组件初始值（initData）',
               type: 'string',
@@ -29,7 +28,6 @@ const settings = () => {
             widget: 'select',
           },
           setting: {
-            ...commonSettings(),
             initDataObj: {
               title: '组件初始值（initData）',
               type: 'object',
@@ -243,7 +241,6 @@ const fnGetObjValue = ({ item, _initData, _linkAction }: any) => {
     requireSet,
     initData = null,
   } = item;
-  console.log('ddd------------------------', item);
   return {
     type: widget ?? 'input',
     label: title,
@@ -262,11 +259,4 @@ const fnGetObjValue = ({ item, _initData, _linkAction }: any) => {
   };
 };
 
-const hidTypeMap: any = {
-  and: '&&',
-  or: '||',
-  equal: '===',
-  unequal: '!==',
-};
-
-export { fnGetObjValue, commonSettings, settings, hidTypeMap };
+export { fnGetObjValue, commonSettings, settings };

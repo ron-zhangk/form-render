@@ -1,47 +1,40 @@
 import './styles.css';
 import Generator from 'fr-generator';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Modal, message } from 'antd';
-import { settings, fnGetObjValue } from '../utils/util';
+import ReactJson from 'react-json-view';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { settings, commonSettings, fnGetObjValue } from '../utils/util';
 
 const RormRender = () => {
+  const [pageData, setPageData] = useState({});
   const ref = useRef<any>(null);
-
-  const defaultValue = {
-    type: 'object',
-    properties: {
-      pageData: {
-        title: 'pageData数据',
-        type: 'string',
-        widget: 'textarea',
-        commonSettings: {},
-        setting: {
-          aaa: {
-            title: 'aaaa',
-            type: 'string',
-            default: '',
-          },
-        },
-      },
-      props: {
-        commonSettings: {},
-      },
-    },
-  };
 
   const fnInitData = ({ initAction, initDataObj, selectValue }: any) => {
     if (initAction) {
       return [];
     }
-
     if (!initDataObj?.initDataList?.length) {
       return null;
     }
-
     return initDataObj.initDataList.map((item: any) => ({
       ...item,
       selected: item?.code === selectValue ?? false,
     }));
+  };
+
+  const onEdit = (e: any) => {
+    const { updated_src = {} } = e;
+    setPageData(updated_src);
+  };
+
+  const onAdd = (e: any) => {
+    const { updated_src = {} } = e;
+    setPageData(updated_src);
+  };
+  const onDelete = (e: any) => {
+    const { updated_src = {} } = e;
+    setPageData(updated_src);
   };
 
   const hasNoNameComponent = (components: any[]) => {
@@ -52,16 +45,14 @@ const RormRender = () => {
     return hiddenConfigs.some((config: any) => !config.label || !config.value);
   };
 
-  const onClick = () => {
+  const onCheckClick = () => {
     const val = ref?.current?.getValue();
     const properties = val?.properties || {};
     const components = Object.values(properties) || [];
-
     if (hasNoNameComponent(components)) {
       message.error('存在没有name的组件');
       return;
     }
-
     const hiddenSetConfigs = components.flatMap(
       (component: any) => component?.hiddenSet?.enumList ?? [],
     );
@@ -72,12 +63,10 @@ const RormRender = () => {
     const requireSetConfigs = components.flatMap(
       (component: any) => component?.requireSet?.enumList ?? [],
     );
-
     if (hasInvalidHiddenConfig(requireSetConfigs)) {
       message.error('存在是否必填配置没填完整的组件');
       return;
     }
-
     const arr = components.map((item: any) => {
       const { initDataObj, selectValue, widget, initAction, linkActionObj } = item;
       let _initData = null;
@@ -90,26 +79,55 @@ const RormRender = () => {
       }
       return fnGetObjValue({ item, _initData, _linkAction });
     });
+    const configData = {
+      elements: arr,
+      pageData,
+    };
 
     Modal.info({
+      width: '500px',
       title: 'JSON',
+      okText: renderUrlCopy(configData),
       content: (
-        <div>
-          <p>{JSON.stringify(arr)}</p>
+        <div style={{ maxHeight: '500px', overflow: 'auto' }}>
+          <ReactJson src={configData} />
         </div>
       ),
     });
   };
 
+  const renderUrlCopy = (configData: any) => {
+    return (
+      <CopyToClipboard text={JSON.stringify(configData)}>
+        <div onClick={() => message.success('复制成功！')} style={{ cursor: 'pointer' }}>
+          {'复制'}
+        </div>
+      </CopyToClipboard>
+    );
+  };
+
   return (
-    <div style={{ height: '80vh' }}>
+    <div style={{ height: '60vh' }}>
       <Generator
         ref={ref}
-        // defaultValue={defaultValue}
-        extraButtons={[{ text: '查看', onClick: () => onClick() }]}
+        extraButtons={[
+          {
+            text: '查看JSON结果',
+            className: 'ant-btn-primary check-btn',
+            onClick: () => onCheckClick(),
+          },
+        ]}
         globalSettings={null}
         settings={settings()}
-        commonSettings={{}}
+        commonSettings={commonSettings()}
+      />
+      <ReactJson
+        src={pageData}
+        name={'pageData'}
+        style={{ marginLeft: '250px', textAlign: 'left' }}
+        onEdit={onEdit}
+        onAdd={onAdd}
+        onDelete={onDelete}
       />
     </div>
   );
