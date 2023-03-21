@@ -259,4 +259,23 @@ const fnGetObjValue = ({ item, _initData, _linkAction }: any) => {
   };
 };
 
-export { fnGetObjValue, commonSettings, settings };
+const isJson = (str:any) => {
+  if (typeof str == 'string') {
+    try {
+      var obj = JSON.parse(str)
+      if (typeof obj == 'object' && obj) {
+        console.log('是JSON')
+        return true
+      } else {
+        return false
+      }
+    } catch (e) {
+      console.log('error：' + str + '!!!' + e)
+      return false
+    }
+  } else {
+    console.log('not string')
+  }
+}
+
+export { fnGetObjValue, commonSettings, settings, isJson };

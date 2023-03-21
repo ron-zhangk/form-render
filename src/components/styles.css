@@ -1,3 +1,8 @@
+.mid-layout {
+  width: 352px;
+  flex-grow: 0 !important;
+}
+
 .mid-layout .ant-btn-default,
 .mid-layout .ant-btn-primary {
   display: none;
@@ -8,7 +13,7 @@
 }
 
 .right-layout {
-  width: 50% !important;
+  flex-grow: 1 !important;
 }
 
 .link-action .fr-content-inline {
@@ -28,4 +33,16 @@
 .hidden-input-set {
   width: 100%;
   display: flex;
+}
+
+.check-json,
+.description {
+  display: flex !important;
+  margin: 12px 12px 4px;
+  margin-left: 250px;
+}
+
+.description {
+  color: #888;
+  margin-top: 0;
 }

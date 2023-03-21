@@ -1,13 +1,17 @@
 import './styles.css';
 import Generator from 'fr-generator';
 import { useRef, useState } from 'react';
-import { Modal, message } from 'antd';
+import { Modal, message, Input, Button } from 'antd';
 import ReactJson from 'react-json-view';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { settings, commonSettings, fnGetObjValue } from '../utils/util';
+import { settings, commonSettings, fnGetObjValue, isJson } from '../utils/util';
+
+const { TextArea } = Input;
 
 const RormRender = () => {
+  const [areaData, setAreaData] = useState('');
   const [pageData, setPageData] = useState({});
+
   const ref = useRef<any>(null);
 
   const fnInitData = ({ initAction, initDataObj, selectValue }: any) => {
@@ -23,26 +27,28 @@ const RormRender = () => {
     }));
   };
 
-  const onEdit = (e: any) => {
-    const { updated_src = {} } = e;
-    setPageData(updated_src);
-  };
-
-  const onAdd = (e: any) => {
-    const { updated_src = {} } = e;
-    setPageData(updated_src);
-  };
-  const onDelete = (e: any) => {
-    const { updated_src = {} } = e;
-    setPageData(updated_src);
-  };
-
   const hasNoNameComponent = (components: any[]) => {
     return components.some((component: any) => !component.name);
   };
 
   const hasInvalidHiddenConfig = (hiddenConfigs: any[]) => {
     return hiddenConfigs.some((config: any) => !config.label || !config.value);
+  };
+
+  const handleTextAreaChange = (e: any) => {
+    setAreaData(e?.target?.value);
+  };
+
+  const onBtnClick = () => {
+    let _pageData = areaData.replace(/'/g, '"');
+    _pageData = _pageData ? _pageData : '{}';
+    const flag = isJson(_pageData);
+    if (!flag) {
+      message.error('JSON格式不对！');
+      return;
+    }
+    const data = JSON.parse(_pageData);
+    setPageData(data);
   };
 
   const onCheckClick = () => {
@@ -121,13 +127,21 @@ const RormRender = () => {
         settings={settings()}
         commonSettings={commonSettings()}
       />
+      <Button type="primary" className="check-json" onClick={onBtnClick}>
+        展示JSON
+      </Button>
+      <p className="description">输入json数据后点击展示JSON按钮查看数据</p>
+      <TextArea
+        rows={4}
+        allowClear
+        onChange={handleTextAreaChange}
+        placeholder="输入pageData数据"
+        style={{ display: 'flex', width: '500px', marginLeft: '200px' }}
+      />
       <ReactJson
         src={pageData}
         name={'pageData'}
         style={{ marginLeft: '250px', textAlign: 'left' }}
-        onEdit={onEdit}
-        onAdd={onAdd}
-        onDelete={onDelete}
       />
     </div>
   );
