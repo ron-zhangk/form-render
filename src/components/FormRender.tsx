@@ -1,39 +1,34 @@
-import './styles.css';
-import Generator from 'fr-generator';
+import Generator, {
+  fromSetting,
+  defaultSettings,
+  defaultCommonSettings,
+  defaultGlobalSettings,
+} from 'fr-generator';
 import { useRef, useState } from 'react';
 import { Modal, message, Input, Button } from 'antd';
 import ReactJson from 'react-json-view';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { settings, commonSettings, fnGetObjValue, isJson } from '../utils/util';
+import { commonSettings, settings } from '../elements/settings';
+import {
+  fnGetObjValue,
+  isJson,
+  fnInitData,
+  hasNoNameComponent,
+  hasInvalidHiddenConfig,
+  fnGetAtributes,
+} from '../utils/util';
+import styles from './FormRender.module.less';
 
 const { TextArea } = Input;
 
 const RormRender = () => {
+  console.log(defaultSettings, defaultCommonSettings, defaultGlobalSettings);
   const [areaData, setAreaData] = useState('');
   const [pageData, setPageData] = useState({});
+  const [schemaForImport, setSchemaForImport] = useState('');
+  const [show, setShow] = useState(false);
 
   const ref = useRef<any>(null);
-
-  const fnInitData = ({ initAction, initDataObj, selectValue }: any) => {
-    if (initAction) {
-      return [];
-    }
-    if (!initDataObj?.initDataList?.length) {
-      return null;
-    }
-    return initDataObj.initDataList.map((item: any) => ({
-      ...item,
-      selected: item?.code === selectValue ?? false,
-    }));
-  };
-
-  const hasNoNameComponent = (components: any[]) => {
-    return components.some((component: any) => !component.name);
-  };
-
-  const hasInvalidHiddenConfig = (hiddenConfigs: any[]) => {
-    return hiddenConfigs.some((config: any) => !config.label || !config.value);
-  };
 
   const handleTextAreaChange = (e: any) => {
     setAreaData(e?.target?.value);
@@ -74,16 +69,20 @@ const RormRender = () => {
       return;
     }
     const arr = components.map((item: any) => {
-      const { initDataObj, selectValue, widget, initAction, linkActionObj } = item;
+      const { initDataObj, selectValue, widget, initAction, linkActionObj, attributes } = item;
       let _initData = null;
       let _linkAction: any = [];
+      let _attributes: any = null;
       if (widget === 'select') {
         _initData = fnInitData({ initAction, initDataObj, selectValue });
       }
       if (linkActionObj?.linkAction) {
         _linkAction = linkActionObj.linkAction.map((v: any) => v.value);
       }
-      return fnGetObjValue({ item, _initData, _linkAction });
+      if (attributes) {
+        _attributes = fnGetAtributes(attributes);
+      }
+      return fnGetObjValue({ item, _initData, _linkAction, _attributes });
     });
     const configData = {
       elements: arr,
@@ -102,6 +101,23 @@ const RormRender = () => {
     });
   };
 
+  const handleImportTextareaChange = (e: any) => {
+    setSchemaForImport(e?.target?.value);
+  };
+
+  const handleImportOk = () => {
+    let schemaForImportData = schemaForImport.replace(/'/g, '"');
+    schemaForImportData = schemaForImportData ? schemaForImportData : '{}';
+    const flag = isJson(schemaForImportData);
+    if (!flag) {
+      message.error('格式不对哦，请重新尝试！');
+      return;
+    }
+    const value = fromSetting(JSON.parse(schemaForImportData));
+    ref?.current?.setValue(value);
+    setShow(!show);
+  };
+
   const renderUrlCopy = (configData: any) => {
     return (
       <CopyToClipboard text={JSON.stringify(configData)}>
@@ -113,10 +129,15 @@ const RormRender = () => {
   };
 
   return (
-    <div style={{ height: '60vh' }}>
+    <div style={{ height: '60vh' }} className={styles['form_render_wrapper']}>
       <Generator
         ref={ref}
         extraButtons={[
+          {
+            text: '导入JSON',
+            className: 'check-btn',
+            onClick: () => setShow(!show),
+          },
           {
             text: '查看JSON结果',
             className: 'ant-btn-primary check-btn',
@@ -143,6 +164,21 @@ const RormRender = () => {
         name={'pageData'}
         style={{ marginLeft: '250px', textAlign: 'left' }}
       />
+      <Modal
+        visible={show}
+        title="导入"
+        okText={'导入'}
+        cancelText={'取消'}
+        onOk={handleImportOk}
+        onCancel={() => setShow(!show)}>
+        <TextArea
+          style={{ fontSize: 12 }}
+          value={schemaForImport}
+          placeholder={'请输入'}
+          onChange={handleImportTextareaChange}
+          autoSize={{ minRows: 10, maxRows: 30 }}
+        />
+      </Modal>
     </div>
   );
 };

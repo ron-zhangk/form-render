@@ -1,233 +1,4 @@
-const settings = () => {
-  return [
-    {
-      title: '组件选择',
-      widgets: [
-        {
-          text: '简单输入框',
-          name: 'I',
-          schema: {
-            title: '输入框',
-            type: 'string',
-            widget: 'input',
-          },
-          setting: {
-            initData: {
-              title: '组件初始值（initData）',
-              type: 'string',
-              default: '',
-            },
-          },
-        },
-        {
-          text: '下拉单选',
-          name: 'S',
-          schema: {
-            title: '下拉单选',
-            type: 'string',
-            widget: 'select',
-          },
-          setting: {
-            initDataObj: {
-              title: '组件初始值（initData）',
-              type: 'object',
-              properties: {
-                initDataList: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      code: {
-                        placeholder: 'code（单个值的code）',
-                        title: 'code',
-                        type: 'string',
-                      },
-                      name: {
-                        placeholder: 'name(单个值的name)',
-                        title: 'name',
-                        type: 'string',
-                      },
-                    },
-                  },
-                  props: {
-                    hideCopy: true,
-                    hideMove: true,
-                  },
-                  default: [],
-                  widget: 'simpleList',
-                },
-              },
-            },
-            selectValue: {
-              title: '组件处于选中的code(initData里select为true的)：',
-              type: 'string',
-              defaultValue: '',
-            },
-          },
-        },
-      ],
-    },
-  ];
-};
-
-const commonSettings = () => {
-  return {
-    name: {
-      title: '组件名称（name）:',
-      type: 'string',
-    },
-    title: {
-      title: 'label展示（label）:',
-      type: 'string',
-      widget: 'htmlInput',
-    },
-    desc: {
-      title: '描述(desc):',
-      type: 'string',
-      default: '',
-    },
-    placeholder: {
-      title: '组件提示信息(placeholder):',
-      type: 'string',
-      default: '请输入',
-    },
-    initAction: {
-      title: '初始接口(initAction):',
-      type: 'string',
-      default: null,
-    },
-    linkActionObj: {
-      title: '联动接口(linkAction)',
-      type: 'object',
-      properties: {
-        linkAction: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              value: {
-                type: 'string',
-                className: 'link-action',
-              },
-            },
-          },
-          props: {
-            hideCopy: true,
-            hideMove: true,
-          },
-          default: [],
-          widget: 'simpleList',
-        },
-      },
-    },
-    defaultRequire: {
-      title: '是否必填(require)',
-      type: 'boolean',
-      default: true,
-    },
-    requireSet: {
-      title: '组件是否必填配置',
-      type: 'object',
-      properties: {
-        linkType: {
-          title: '多组件组合类型',
-          type: 'string',
-          widget: 'radio',
-          props: {
-            options: [
-              { label: '&&', value: 'and' },
-              { label: '||', value: 'or' },
-            ],
-          },
-          default: 'and',
-        },
-        enumList: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              label: {
-                placeholder: '组件name',
-                type: 'string',
-              },
-              setType: {
-                type: 'string',
-                enum: ['equal', 'unequal'],
-                enumNames: ['===', '!=='],
-                default: 'equal',
-                widget: 'select',
-              },
-              value: {
-                placeholder: '组件value',
-                type: 'string',
-              },
-            },
-          },
-          props: {
-            hideCopy: true,
-            hideMove: true,
-          },
-          default: [],
-          widget: 'simpleList',
-        },
-      },
-    },
-    defaultHidden: {
-      title: '组件隐藏（hidden）',
-      type: 'boolean',
-      default: false,
-    },
-    hiddenSet: {
-      title: '组件隐藏配置',
-      type: 'object',
-      properties: {
-        linkType: {
-          title: '多组件组合类型',
-          type: 'string',
-          widget: 'radio',
-          props: {
-            options: [
-              { label: '&&', value: 'and' },
-              { label: '||', value: 'or' },
-            ],
-          },
-          default: 'and',
-        },
-        enumList: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              label: {
-                placeholder: '组件name',
-                type: 'string',
-              },
-              setType: {
-                type: 'string',
-                enum: ['equal', 'unequal'],
-                enumNames: ['===', '!=='],
-                default: 'equal',
-                widget: 'select',
-              },
-              value: {
-                placeholder: '组件value',
-                type: 'string',
-              },
-            },
-          },
-          props: {
-            hideCopy: true,
-            hideMove: true,
-          },
-          default: [],
-          widget: 'simpleList',
-        },
-      },
-    },
-  };
-};
-
-const fnGetObjValue = ({ item, _initData, _linkAction }: any) => {
+const fnGetObjValue = ({ item, _initData, _linkAction, _attributes }: any) => {
   const {
     name,
     desc,
@@ -242,7 +13,7 @@ const fnGetObjValue = ({ item, _initData, _linkAction }: any) => {
     initData = null,
   } = item;
   return {
-    type: widget ?? 'input',
+    type: widget === 'date' ? 'datePicker' : widget || 'input',
     label: title,
     name: name,
     desc: desc ?? '',
@@ -250,6 +21,7 @@ const fnGetObjValue = ({ item, _initData, _linkAction }: any) => {
     hidden: defaultHidden ?? false,
     require: defaultRequire ?? false,
     initAction: initAction ?? null,
+    attributes: _attributes ?? null,
     linkAction: _linkAction?.length ? _linkAction : null,
     initData: widget === 'select' ? _initData : initData,
     events: {
@@ -259,23 +31,57 @@ const fnGetObjValue = ({ item, _initData, _linkAction }: any) => {
   };
 };
 
-const isJson = (str:any) => {
+const isJson = (str: any) => {
   if (typeof str == 'string') {
     try {
-      var obj = JSON.parse(str)
+      var obj = JSON.parse(str);
       if (typeof obj == 'object' && obj) {
-        console.log('是JSON')
-        return true
+        console.log('是JSON');
+        return true;
       } else {
-        return false
+        return false;
       }
     } catch (e) {
-      console.log('error：' + str + '!!!' + e)
-      return false
+      console.log('error：' + str + '!!!' + e);
+      return false;
     }
   } else {
-    console.log('not string')
+    console.log('not string');
   }
-}
+};
 
-export { fnGetObjValue, commonSettings, settings, isJson };
+const fnInitData = ({ initAction, initDataObj, selectValue }: any) => {
+  if (initAction) {
+    return [];
+  }
+  if (!initDataObj?.initDataList?.length) {
+    return null;
+  }
+  return initDataObj.initDataList.map((item: any) => ({
+    ...item,
+    selected: item?.code === selectValue ?? false,
+  }));
+};
+
+const hasNoNameComponent = (components: any[]) => {
+  return components.some((component: any) => !component.name);
+};
+
+const hasInvalidHiddenConfig = (hiddenConfigs: any[]) => {
+  return hiddenConfigs.some((config: any) => !config.label || !config.value);
+};
+
+const fnGetAtributes = (attributes: any) => {
+  let data = attributes.replace(/'/g, '"');
+  const flag = isJson(data);
+  return flag ? JSON.parse(data) : null;
+};
+
+export {
+  fnGetObjValue,
+  isJson,
+  fnInitData,
+  hasNoNameComponent,
+  hasInvalidHiddenConfig,
+  fnGetAtributes,
+};
