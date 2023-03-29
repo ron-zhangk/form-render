@@ -1,3 +1,6 @@
+import { keyBy, isNaN } from 'lodash';
+import unique from 'simple-unique';
+
 const fnGetObjValue = ({ item, _initData, _linkAction, _attributes }: any) => {
   const {
     name,
@@ -10,7 +13,6 @@ const fnGetObjValue = ({ item, _initData, _linkAction, _attributes }: any) => {
     widget,
     hiddenSet,
     requireSet,
-    initData = null,
   } = item;
   return {
     type: widget === 'date' ? 'datePicker' : widget || 'input',
@@ -23,7 +25,7 @@ const fnGetObjValue = ({ item, _initData, _linkAction, _attributes }: any) => {
     initAction: initAction ?? null,
     attributes: _attributes ?? null,
     linkAction: _linkAction?.length ? _linkAction : null,
-    initData: widget === 'select' ? _initData : initData,
+    initData: _initData ?? null,
     events: {
       hidden: hiddenSet?.enumList?.length ? hiddenSet : null,
       require: requireSet?.enumList?.length ? requireSet : null,
@@ -50,17 +52,25 @@ const isJson = (str: any) => {
   }
 };
 
-const fnInitData = ({ initAction, initDataObj, selectValue }: any) => {
-  if (initAction) {
-    return [];
+const fnInitData = (props: any) => {
+  const { widget, initData, initAction, initDataObj, selectValue } = props;
+  switch (widget) {
+    case 'select':
+      if (initAction) {
+        return [];
+      }
+      if (!initDataObj?.initDataList?.length) {
+        return null;
+      }
+      return initDataObj.initDataList.map((item: any) => ({
+        ...item,
+        selected: item?.code === selectValue ?? false,
+      }));
+    case 'date':
+      return initData && !isNaN(Number(initData)) ? Number(initData) : null;
+    default:
+      return initData;
   }
-  if (!initDataObj?.initDataList?.length) {
-    return null;
-  }
-  return initDataObj.initDataList.map((item: any) => ({
-    ...item,
-    selected: item?.code === selectValue ?? false,
-  }));
 };
 
 const hasNoNameComponent = (components: any[]) => {
@@ -77,6 +87,44 @@ const fnGetAtributes = (attributes: any) => {
   return flag ? JSON.parse(data) : null;
 };
 
+const fnGetImportData = (schemaForImportData: any) => {
+  const { elements = [] } = schemaForImportData;
+  return {
+    type: 'object',
+    properties: keyBy(
+      elements.map(({ initData, type, events, linkAction, ...others }: any) => {
+        const params = {
+          ...others,
+          title: others.label,
+          widget: type === 'datePicker' ? 'date' : type || 'input',
+          type: 'string',
+          defaultHidden: others.hidden,
+          defaultRequire: others.require,
+          linkActionObj: { linkAction: linkAction?.map((v: any) => ({ value: v })) },
+          hiddenSet: {
+            linkType: events?.hidden?.linkType || 'and',
+            enumList: events?.hidden?.enumList || [],
+          },
+          requireSet: {
+            linkType: events?.require?.linkType || 'and',
+            enumList: events?.require?.enumList || [],
+          },
+          UUID: `${type.charAt(0).toUpperCase()}_${unique(6)}`,
+        };
+        if (type === 'select') {
+          const selectData = initData?.find((v: any) => v?.selected);
+          params.selectValue = selectData?.code;
+          params.initDataObj = { initDataList: initData || [] };
+        } else {
+          params.initData = initData || '';
+        }
+        return params;
+      }),
+      'UUID',
+    ),
+  };
+};
+
 export {
   fnGetObjValue,
   isJson,
@@ -84,4 +132,5 @@ export {
   hasNoNameComponent,
   hasInvalidHiddenConfig,
   fnGetAtributes,
+  fnGetImportData,
 };

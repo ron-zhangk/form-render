@@ -1,9 +1,4 @@
-import Generator, {
-  fromSetting,
-  defaultSettings,
-  defaultCommonSettings,
-  defaultGlobalSettings,
-} from 'fr-generator';
+import Generator, { fromSetting } from 'fr-generator';
 import { useRef, useState } from 'react';
 import { Modal, message, Input, Button } from 'antd';
 import ReactJson from 'react-json-view';
@@ -16,13 +11,13 @@ import {
   hasNoNameComponent,
   hasInvalidHiddenConfig,
   fnGetAtributes,
+  fnGetImportData,
 } from '../utils/util';
 import styles from './FormRender.module.less';
 
 const { TextArea } = Input;
 
 const RormRender = () => {
-  console.log(defaultSettings, defaultCommonSettings, defaultGlobalSettings);
   const [areaData, setAreaData] = useState('');
   const [pageData, setPageData] = useState({});
   const [schemaForImport, setSchemaForImport] = useState('');
@@ -39,7 +34,7 @@ const RormRender = () => {
     _pageData = _pageData ? _pageData : '{}';
     const flag = isJson(_pageData);
     if (!flag) {
-      message.error('JSON格式不对！');
+      message.error('pageData的JSON格式不对！');
       return;
     }
     const data = JSON.parse(_pageData);
@@ -69,19 +64,17 @@ const RormRender = () => {
       return;
     }
     const arr = components.map((item: any) => {
-      const { initDataObj, selectValue, widget, initAction, linkActionObj, attributes } = item;
+      const { linkActionObj, attributes } = item;
       let _initData = null;
       let _linkAction: any = [];
       let _attributes: any = null;
-      if (widget === 'select') {
-        _initData = fnInitData({ initAction, initDataObj, selectValue });
-      }
       if (linkActionObj?.linkAction) {
         _linkAction = linkActionObj.linkAction.map((v: any) => v.value);
       }
       if (attributes) {
         _attributes = fnGetAtributes(attributes);
       }
+      _initData = fnInitData(item);
       return fnGetObjValue({ item, _initData, _linkAction, _attributes });
     });
     const configData = {
@@ -113,8 +106,12 @@ const RormRender = () => {
       message.error('格式不对哦，请重新尝试！');
       return;
     }
-    const value = fromSetting(JSON.parse(schemaForImportData));
+    const _data = JSON.parse(schemaForImportData);
+    const { pageData = {} } = _data;
+    const importData = fnGetImportData(_data);
+    const value = fromSetting(importData);
     ref?.current?.setValue(value);
+    setAreaData(JSON.stringify(pageData));
     setShow(!show);
   };
 
@@ -155,6 +152,7 @@ const RormRender = () => {
       <TextArea
         rows={4}
         allowClear
+        value={areaData}
         onChange={handleTextAreaChange}
         placeholder="输入pageData数据"
         style={{ display: 'flex', width: '500px', marginLeft: '200px' }}

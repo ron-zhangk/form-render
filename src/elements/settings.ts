@@ -67,7 +67,7 @@ const settings = () => {
         },
         {
           text: '时间选择',
-          name: 'T',
+          name: 'D',
           schema: {
             title: '时间选择',
             type: 'string',
